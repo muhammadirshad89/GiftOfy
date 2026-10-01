@@ -1,0 +1,157 @@
+/* GiftOfy Magic Wish Experience. CSS only: the recipient's opening screen, floating particles, pop and reveal. */
+.magicstage{--fg:#fff4f7;--mut:#ebc8d6;--card:#3a1730;--line:#ffffff38;--g1:#ffffff1f;
+  min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:28px 20px;text-align:center;position:relative;overflow:hidden;color:var(--fg);
+  background:radial-gradient(90% 55% at 50% 0%,#5b2a7a 0%,transparent 70%),radial-gradient(70% 45% at 100% 100%,#a01d4f80 0%,transparent 70%),linear-gradient(180deg,#3a0e2a 0%,#1d0a1f 100%)}
+.magicstage::before{content:"";position:absolute;left:50%;top:46%;width:130vmin;height:130vmin;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--stage-acc,#ff4f9a) 34%,transparent) 0%,transparent 62%);pointer-events:none;animation:glowpulse 4s ease-in-out infinite}
+@keyframes glowpulse{50%{opacity:.7;transform:translate(-50%,-50%) scale(1.06)}}
+.magicstage>:not(.fxwrap){position:relative;z-index:1}
+.io-intro{transition:opacity .35s ease}.io-intro.gone{opacity:0}
+.io-intro h2{font-size:clamp(1.45rem,6.4vw,2rem);margin:0;color:#fff;text-shadow:0 2px 18px #0006}
+.io-hint{margin:0;color:var(--mut);font-size:.95rem;letter-spacing:.01em;animation:hintpulse 2.4s ease-in-out infinite}
+@keyframes hintpulse{50%{opacity:.55}}
+
+/* ---------- Floating particles (all CSS shapes/glyphs, tinted by --c, sized by --s) ---------- */
+.fxwrap{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.px{position:absolute;opacity:0;will-change:transform,opacity;font-style:normal;line-height:1}
+.px-balloon{bottom:-18%;width:var(--s);height:calc(var(--s) * 1.24);font-size:0;border-radius:50% 50% 48% 48%/58% 58% 42% 42%;
+  background:radial-gradient(circle at 32% 26%,#ffffffb8 0,#fff0 34%),radial-gradient(circle at 60% 70%,color-mix(in srgb,var(--c) 70%,#000),var(--c));
+  box-shadow:inset -4px -6px 10px #0003,0 0 20px color-mix(in srgb,var(--c) 45%,transparent);animation:pxrise 9s ease-in infinite}
+.px-balloon::after{content:"";position:absolute;left:50%;top:100%;width:1.5px;height:calc(var(--s) * .9);background:#ffffff90;transform:translateX(-50%)}
+.px-heart{bottom:-12%;font-size:var(--s);color:var(--c);text-shadow:0 0 16px color-mix(in srgb,var(--c) 70%,transparent),0 3px 6px #0006;animation:pxrise 9s ease-in infinite}
+.px-petal{top:-8%;font-size:0;width:var(--s);height:calc(var(--s) * 1.3);border-radius:100% 0 100% 0;background:linear-gradient(135deg,#ffe0ea,var(--c));box-shadow:0 3px 8px #0004;animation:pxfall 9s linear infinite}
+.px-confetti{top:-6%;font-size:0;width:calc(var(--s) * .4);height:calc(var(--s) * .72);background:var(--c);border-radius:2px;box-shadow:0 2px 5px #0004;animation:pxfall 8s linear infinite}
+.px-sparkle,.px-star{font-size:var(--s);color:var(--c);text-shadow:0 0 14px var(--c);animation:pxtwinkle 3s ease-in-out infinite}
+@keyframes pxrise{0%{opacity:0;transform:translateY(0) translateX(0) rotate(calc(var(--r) * 5deg))}10%{opacity:.95}50%{transform:translateY(-60vh) translateX(calc(var(--r) * 16px)) rotate(calc(var(--r) * -6deg))}100%{opacity:0;transform:translateY(-125vh) translateX(calc(var(--r) * -12px)) rotate(calc(var(--r) * 8deg))}}
+@keyframes pxfall{0%{opacity:0;transform:translateY(0) rotate(0)}10%{opacity:.95}100%{opacity:0;transform:translateY(115vh) translateX(calc(var(--r) * 24px)) rotate(240deg)}}
+@keyframes pxtwinkle{0%,100%{opacity:.15;transform:scale(.7)}50%{opacity:1;transform:scale(1.25)}}
+
+/* ---------- The interactive object. The <button> is only an accessibility wrapper; nothing button-like is drawn. ---------- */
+.iobj{all:unset;box-sizing:border-box;position:relative;width:min(58vw,240px);height:min(58vw,240px);cursor:pointer;perspective:800px;display:grid;place-items:center;touch-action:manipulation;appearance:none;-webkit-appearance:none;-moz-appearance:none;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+.iobj:focus-visible{outline:3px solid #fff;outline-offset:10px;border-radius:40%}
+.io-shape{position:relative;width:100%;height:100%;transform-style:preserve-3d;animation:iobob 3.4s ease-in-out infinite}
+.iobj:hover .io-shape{animation-duration:1.8s}
+@keyframes iobob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-12px) rotate(2deg)}}
+.iobj.popped{cursor:default}
+.iobj.popped .io-shape{animation:ioburst .55s ease-out forwards}
+@keyframes ioburst{0%{transform:scale(1)}45%{transform:scale(1.22)}100%{transform:scale(.3);opacity:0}}
+
+/* Pop: shards fly outward and a shock ring expands */
+.io-burst{position:absolute;inset:0;pointer-events:none;z-index:3}
+.io-burst::before{content:"";position:absolute;left:50%;top:44%;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;background:radial-gradient(circle,#fff 0,color-mix(in srgb,var(--acc) 60%,transparent) 42%,transparent 70%);opacity:0;animation:flash .5s ease-out forwards}
+@keyframes flash{0%{opacity:.95;transform:scale(.3)}100%{opacity:0;transform:scale(2.8)}}
+.io-burst i{position:absolute;left:50%;top:44%;width:24px;height:16px;border-radius:50% 0 50% 0;background:var(--acc);opacity:0;animation:shard .95s cubic-bezier(.15,.8,.3,1) forwards;box-shadow:0 0 12px var(--acc)}
+.io-burst i:nth-child(3n+2){background:#f5b942;box-shadow:0 0 10px #f5b942}
+.io-burst i:nth-child(3n){background:#fff;box-shadow:0 0 10px #fff}
+@keyframes shard{0%{opacity:1;transform:rotate(var(--a)) translateX(0) scale(1)}70%{opacity:1}100%{opacity:0;transform:rotate(var(--a)) translateX(var(--d)) rotate(220deg) scale(.5)}}
+.io-wave{position:absolute;left:50%;top:44%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;border:4px solid #fff;opacity:.95;box-shadow:0 0 18px #fff,inset 0 0 12px #fff8;animation:wave .7s ease-out forwards}
+@keyframes wave{to{transform:scale(9);opacity:0}}
+
+/* Balloon: a tall, glossy, egg-shaped balloon with a knot and a string */
+.io-balloon{width:min(62vw,250px);height:min(84vw,340px)}
+.io-balloon .io-shape{transform-origin:50% 84%;animation-name:balloonsway}
+@keyframes balloonsway{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-14px) rotate(3deg)}}
+.io-balloon .io-a{position:absolute;left:4%;right:4%;top:0;bottom:20%;border-radius:50% 50% 50% 50%/46% 46% 54% 54%;
+  background:radial-gradient(ellipse at 36% 28%,color-mix(in srgb,var(--acc) 55%,#fff) 0%,var(--acc) 42%,color-mix(in srgb,var(--acc) 58%,#000) 100%);
+  box-shadow:inset -20px -26px 40px #00000059,inset 10px 10px 22px #ffffff2e,0 0 80px color-mix(in srgb,var(--acc) 60%,transparent),0 30px 46px #0000004d}
+.io-balloon .io-b{position:absolute;left:50%;bottom:calc(20% - 12px);width:20px;height:16px;transform:translateX(-50%);background:color-mix(in srgb,var(--acc) 62%,#000);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.io-balloon .io-c{position:absolute;left:50%;top:80%;bottom:0;width:2px;transform:translateX(-50%) rotate(2deg);background:linear-gradient(#ffffffd9,#ffffff33);border-radius:2px}
+.io-balloon .io-d{position:absolute;left:20%;top:9%;width:22%;height:14%;border-radius:50%;background:#ffffff8c;transform:rotate(-34deg);filter:blur(2px)}
+.io-balloon.popped .io-shape{animation:balloonpop .5s ease-out forwards}
+@keyframes balloonpop{0%{transform:scale(1)}30%{transform:scale(1.16,1.08)}42%{transform:scale(1.24);opacity:1}43%,100%{transform:scale(1.3);opacity:0}}
+
+/* Envelope: flap opens and the card rises out */
+.io-envelope{width:min(68vw,290px);height:min(50vw,215px)}
+.io-envelope .io-a{position:absolute;inset:12% 0 0 0;border-radius:12px;background:linear-gradient(160deg,#fffdfb,#eed9e3);box-shadow:0 24px 44px #0006,inset 0 0 0 2px color-mix(in srgb,var(--acc) 55%,#fff);z-index:1}
+.io-envelope .io-d{position:absolute;left:9%;right:9%;top:4%;height:64%;border-radius:8px;background:#fff8f0;box-shadow:0 2px 10px #0003;z-index:2;transition:transform .55s ease .1s}
+.io-envelope .io-c{position:absolute;left:0;right:0;bottom:0;height:62%;background:linear-gradient(170deg,#fbeef3,#e8cdd9);clip-path:polygon(0 0,50% 48%,100% 0,100% 100%,0 100%);z-index:3}
+.io-envelope .io-b{position:absolute;left:0;right:0;top:12%;height:50%;background:linear-gradient(180deg,var(--acc),color-mix(in srgb,var(--acc) 62%,#000));clip-path:polygon(0 0,100% 0,50% 100%);transform-origin:50% 0;transition:transform .55s ease;z-index:4}
+.io-envelope::after{content:"♥";position:absolute;left:50%;top:50%;width:34px;height:34px;margin-left:-17px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a8,#c9a15a);color:#7a1f3d;display:grid;place-items:center;font-size:17px;box-shadow:0 3px 8px #0005;z-index:5;transition:opacity .2s}
+.io-envelope.popped::after{opacity:0}
+.io-envelope.popped .io-b{transform:rotateX(180deg);z-index:0}
+.io-envelope.popped .io-d{transform:translateY(-52%)}
+.io-envelope.popped .io-shape{animation:none}
+
+/* Ring: gold band, faceted gem, twinkle */
+.io-ring{width:min(56vw,230px);height:min(56vw,230px)}
+.io-ring .io-a{position:absolute;left:16%;right:16%;top:32%;bottom:6%;border-radius:50%;border:15px solid #d9a441;box-shadow:inset 0 0 0 2px #ffffff70,inset 0 8px 10px #ffffff55,inset 0 -8px 12px #0000004d,0 14px 28px #0006}
+.io-ring .io-b{position:absolute;left:50%;top:4%;width:34%;height:30%;transform:translateX(-50%);clip-path:polygon(20% 0,80% 0,100% 36%,50% 100%,0 36%);background:linear-gradient(135deg,#fff,#c9ecff 38%,#e6d4ff 68%,#fff);filter:drop-shadow(0 0 14px #ffffffb0)}
+.io-ring .io-c{position:absolute;left:39%;top:30%;width:22%;height:9%;background:#d9a441;clip-path:polygon(0 0,100% 0,80% 100%,20% 100%)}
+.io-ring .io-d{position:absolute;left:62%;top:0;width:26%;height:26%}
+.io-ring .io-d::before{content:"✦";position:absolute;inset:0;color:#fff;font-size:min(9vw,34px);text-shadow:0 0 14px #fff,0 0 26px var(--acc);animation:pxtwinkle 2s ease-in-out infinite}
+.iobj.io-ring:hover .io-shape,.io-ring.popped .io-shape{animation:iospin 1.2s ease-in-out infinite}
+@keyframes iospin{to{transform:rotateY(360deg)}}
+
+/* Heart / Hearts (anniversary): one seamless shape each. The SVG is only a mask; the glossy fill is CSS. */
+.io-heart,.io-hearts{--heart:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 29.6'%3E%3Cpath d='M23.6 0c-3.4 0-6.3 2.7-7.6 5.6C14.7 2.7 11.8 0 8.4 0 3.8 0 0 3.8 0 8.4c0 9.4 9.5 11.9 16 21.2 6.1-9.3 16-12.1 16-21.2C32 3.8 28.2 0 23.6 0z'/%3E%3C/svg%3E")}
+.io-heart{width:min(62vw,250px);height:min(58vw,232px)}
+.io-heart .io-shape,.io-hearts .io-shape{filter:drop-shadow(0 0 26px color-mix(in srgb,var(--acc) 65%,transparent)) drop-shadow(0 18px 20px #0005)}
+.io-heart .io-a,.io-hearts .io-a,.io-hearts .io-b{position:absolute;background:radial-gradient(circle at 30% 24%,#ffffffc4 0,#fff0 24%),radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--acc) 62%,#fff),var(--acc) 58%,color-mix(in srgb,var(--acc) 58%,#000));-webkit-mask:var(--heart) center/contain no-repeat;mask:var(--heart) center/contain no-repeat}
+.io-heart .io-a{inset:0}
+.io-heart .io-b,.io-heart .io-c,.io-heart .io-d,.io-hearts .io-c,.io-hearts .io-d{display:none}
+.iobj.io-heart:hover .io-shape,.io-heart.popped .io-shape,.iobj.io-hearts:hover .io-shape,.io-hearts.popped .io-shape{animation:iopulse .9s ease-in-out infinite}
+@keyframes iopulse{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+.io-hearts{width:min(70vw,285px);height:min(58vw,236px)}
+.io-hearts .io-a{left:0;bottom:0;width:64%;aspect-ratio:32/29.6;transform:rotate(-10deg)}
+.io-hearts .io-b{right:0;top:0;width:46%;aspect-ratio:32/29.6;transform:rotate(12deg);background:radial-gradient(circle at 30% 24%,#fff 0,#fff0 26%),radial-gradient(circle at 50% 42%,#fff,color-mix(in srgb,var(--acc) 35%,#fff) 60%,color-mix(in srgb,var(--acc) 70%,#fff))}
+
+/* Gift box: ribbon, bow and a lid that flies off */
+.io-gift{width:min(58vw,240px);height:min(58vw,240px)}
+.io-gift .io-a{position:absolute;left:12%;right:12%;top:44%;bottom:4%;border-radius:8px;background:linear-gradient(160deg,color-mix(in srgb,var(--acc) 70%,#fff),var(--acc) 50%,color-mix(in srgb,var(--acc) 60%,#000));box-shadow:0 22px 34px #0006,inset -10px -12px 24px #0003}
+.io-gift .io-b{position:absolute;left:7%;right:7%;top:30%;height:18%;border-radius:8px;background:linear-gradient(160deg,color-mix(in srgb,var(--acc) 60%,#fff),var(--acc));box-shadow:0 8px 16px #0005;transition:transform .5s ease,opacity .4s ease;z-index:2}
+.io-gift .io-c{position:absolute;left:46%;top:30%;bottom:4%;width:8%;background:linear-gradient(90deg,#f0c56c,#c9a15a);z-index:3}
+.io-gift .io-d{position:absolute;left:32%;top:12%;width:36%;height:20%;z-index:3;transition:transform .5s ease,opacity .4s ease}
+.io-gift .io-d::before,.io-gift .io-d::after{content:"";position:absolute;top:0;width:50%;height:100%;border:6px solid #f0c56c;border-radius:50% 50% 8% 50%;box-shadow:0 3px 8px #0004}
+.io-gift .io-d::before{left:0;transform:rotate(-8deg)}
+.io-gift .io-d::after{right:0;transform:scaleX(-1) rotate(-8deg)}
+.io-gift.popped .io-b,.io-gift.popped .io-d{transform:translateY(-60%) rotate(-14deg);opacity:0}
+
+/* Moon: glowing crescent with stars */
+.io-moon{width:min(58vw,240px);height:min(58vw,240px)}
+.io-moon .io-a{position:absolute;left:36%;top:16%;width:54%;height:54%;border-radius:50%;background:transparent;box-shadow:-30px 14px 0 0 #f7d27a;filter:drop-shadow(0 0 26px #f5b942)}
+.io-moon .io-b,.io-moon .io-c{position:absolute;color:#ffe9a8;text-shadow:0 0 12px #f5b942;animation:pxtwinkle 2.4s ease-in-out infinite}
+.io-moon .io-b{left:66%;top:22%}.io-moon .io-b::before{content:"★";font-size:min(9vw,34px)}
+.io-moon .io-c{left:24%;top:62%;animation-delay:.8s}.io-moon .io-c::before{content:"✦";font-size:min(6vw,24px)}
+.io-moon .io-d{display:none}
+
+/* Bouquet: three blooms on stems with a ribbon */
+.io-bouquet{width:min(58vw,240px);height:min(60vw,250px)}
+.io-bouquet .io-a,.io-bouquet .io-b,.io-bouquet .io-c{position:absolute;font-size:min(22vw,88px);line-height:1;filter:drop-shadow(0 8px 10px #0005)}
+.io-bouquet .io-a::before{content:"🌹"}.io-bouquet .io-b::before{content:"🌷"}.io-bouquet .io-c::before{content:"🌸"}
+.io-bouquet .io-a{left:2%;top:10%;transform:rotate(-12deg)}
+.io-bouquet .io-b{right:2%;top:10%;transform:rotate(12deg)}
+.io-bouquet .io-c{left:50%;top:0;margin-left:-.5em}
+.io-bouquet .io-d{position:absolute;left:36%;right:36%;bottom:0;height:46%;background:linear-gradient(180deg,#3a7d44,#25592f);clip-path:polygon(20% 0,80% 0,100% 100%,0 100%);box-shadow:0 10px 16px #0005}
+.io-bouquet .io-d::after{content:"";position:absolute;left:0;right:0;top:30%;height:14%;background:var(--acc)}
+
+/* ---------- Reveal sequence ---------- */
+.wr-wrap{width:100%;max-width:520px}
+.stage.wr{min-height:0;padding:34px 22px;border-radius:26px;box-shadow:0 24px 60px #0008}
+.wr .card-in>*{opacity:0;transform:translateY(12px);animation:revealIn .6s ease forwards}
+.wr .card-in>h2{animation-delay:.1s}.wr .card-in>.msg{animation-delay:.45s}.wr .card-in>.from{animation-delay:.8s}
+.reveal-in{opacity:0;transform:translateY(14px);animation:revealIn .55s ease forwards}
+.reveal-in.d1{animation-delay:0s}.reveal-in.d3{animation-delay:1.2s}.reveal-in.d4{animation-delay:1.5s}
+@keyframes revealIn{to{opacity:1;transform:none}}
+.closing{margin-top:18px;padding:14px 18px;border-radius:16px;background:var(--g1);font-weight:600;max-width:34ch;margin-left:auto;margin-right:auto;backdrop-filter:blur(6px)}
+.closing-lead{color:var(--mut);font-weight:500;margin-bottom:.3em}
+.react{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:18px}
+.react button{border:1.5px solid var(--line);background:#2a1230d9;backdrop-filter:blur(6px);color:inherit;border-radius:999px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer;transition:transform .15s,background .15s}
+.react button:hover{transform:translateY(-2px);background:#ffffff33}
+.react-thanks{color:var(--mut);margin-top:8px}
+.magicstage .btn.ghost{background:#2a1230b3;backdrop-filter:blur(6px);color:#fff}
+
+@media (prefers-reduced-motion: reduce){
+  .px,.io-shape,.reveal-in,.wr .card-in>*,.io-hint,.magicstage::before,.io-burst i,.io-wave{animation:none!important;transition:none!important}
+  .reveal-in,.wr .card-in>*{opacity:1!important;transform:none!important}
+  .px{opacity:.5}
+  .io-burst{display:none}
+  .io-envelope.popped .io-b{transform:rotateX(180deg)}
+}
+
+/* Reply form + onward sharing on the recipient's reveal screen */
+.share-block{margin:22px 0;padding:16px;border-radius:18px;background:var(--card);border:1px solid var(--line)}
+.share-lead{font-weight:700;margin:0 0 10px}
+.reply{margin-top:22px;padding:20px;border-radius:20px;background:var(--card);border:1px solid var(--line);text-align:left;max-width:480px;margin-inline:auto}
+.reply h2{margin-top:0}
+.reply.sent{text-align:center}
+.reply label{display:block;margin:12px 0}
+.reply textarea,.reply input{width:100%;margin-top:6px}
