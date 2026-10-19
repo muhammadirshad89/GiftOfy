@@ -17,7 +17,7 @@ import { PAGES } from './src/data/content.js';
 export const config = {
   // Everything except: known static files at the root, and anything with a file extension
   // (covers /assets/*.js|css, favicon.svg, og-default.png, robots.txt, sitemap.xml, index.html).
-  matcher: '/((?!assets/|favicon\\.svg|og-default\\.png|robots\\.txt|sitemap\\.xml|index\\.html).*)',
+  matcher: '/((?!assets/|favicon\\.svg|og-default\\.png|robots\\.txt|sitemap\\.xml|ads\\.txt|index\\.html).*)',
 };
 
 const SITE = 'https://giftofy.vercel.app';
