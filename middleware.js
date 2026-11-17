@@ -1,87 +1,56 @@
-// Vercel Edge Middleware. Runs before the SPA rewrite in vercel.json, for every non-asset request,
-// so the *initial* HTML response already has the right <title>/description/canonical/robots/OG/
-// Twitter tags for that route -- not just after React mounts. This is what makes link-preview bots
-// (WhatsApp, Facebook, Twitter/X don't run JS) and non-JS crawlers see correct, route-specific
-// metadata instead of the generic homepage shell every time.
+// Vercel Edge Middleware. Runs before the SPA rewrite in vercel.json for every non-file request, so the
+// *initial* HTML response already has the right <title>, description, canonical, robots, Open Graph and
+// Twitter tags -- and, for public pages, the full pre-rendered page body -- even for crawlers and link-preview
+// bots that do not run JavaScript.
 //
-// Deliberately framework-agnostic (standard Request/Response/URL/fetch, no Next.js APIs), since
-// this project is a plain Vite + React Router SPA, not Next.js -- Vercel's platform-level Edge
-// Middleware works the same way regardless of framework.
+// Framework-agnostic (standard Request/Response/URL/fetch): this project is a plain Vite + React Router SPA.
 //
-// Pulls titles/descriptions from the SAME data files the client components already render from
-// (src/data/seoPages.js, src/data/content.js), so there is exactly one source of truth: update a
-// page's copy there and both the server-delivered HTML and the client-side useSeo.js update together.
-import { SEO_PAGES } from './src/data/seoPages.js';
-import { PAGES } from './src/data/content.js';
+// What it does, in order:
+//  1. Canonicalizes trailing slashes (308) -- "/" itself is never redirected.
+//  2. Resolves the path with src/seo/routes.js (the same function the build-time pre-renderer and the tests use):
+//     indexable page | /create/:occasion | private (/wish, /reply, /admin: noindex) | unknown (real HTTP 404).
+//  3. For indexable pages, serves the pre-rendered HTML that scripts/prerender.mjs wrote to /_pre/<path>.html at build time
+//     (falls back to the plain SPA shell if that file is missing, so a pre-render problem can never take the site down).
+//  4. Applies the route's SEO tags to whichever HTML it is serving.
+import { seoForPath } from './src/seo/routes.js';
+import { applySeo } from './src/seo/applySeo.js';
+import { SITE_URL } from './src/data/siteConfig.js';
 
 export const config = {
-  // Everything except: known static files at the root, and anything with a file extension
-  // (covers /assets/*.js|css, favicon.svg, og-default.png, robots.txt, sitemap.xml, index.html).
-  matcher: '/((?!assets/|favicon\\.svg|og-default\\.png|robots\\.txt|sitemap\\.xml|ads\\.txt|index\\.html).*)',
+  // Everything EXCEPT: /assets/*, /_pre/* (pre-rendered files, fetched below) and any path ending in a static-file
+  // extension. The extension rule is what keeps /google0da64d656286dcbb.html (Search Console verification), /ads.txt,
+  // /robots.txt, /sitemap.xml, /llms.txt, /sw.js, images, fonts etc. served as the real files instead of HTML.
+  matcher: '/((?!assets/|_pre/|[^?]*\\.(?:html?|css|js|mjs|json|txt|xml|png|jpe?g|webp|gif|svg|ico|woff2?|ttf|otf|map|webmanifest)).*)',
 };
 
-const SITE = 'https://giftofy.vercel.app';
-const DEFAULT_TITLE = 'GiftOfy – Create Digital Wishes & Share Special Moments';
-const DEFAULT_DESC = 'Create beautiful personalized digital wishes for birthdays, anniversaries, weddings, Eid, Valentine’s Day and more. Choose a design, personalize your message and share your wish with anyone.';
-const DEFAULT_SOCIAL_DESC = 'Create beautiful personalized digital wishes and share special moments with the people you care about.';
-const titleize = (t) => (t ? `${t} · GiftOfy` : DEFAULT_TITLE);
+const ARTICLE_GROUPS = new Set(['occasion', 'recipient', 'guide']);
+const looksPrerendered = (res, body) => res.ok && (res.headers.get('content-type') || '').includes('text/html') && body.includes('data-prerendered="1"');
 
-/** Mirrors each page component's own useSeo({...}) call. If you change one, change the other. */
-function seoFor(pathname) {
-  if (pathname === '/') return { title: DEFAULT_TITLE, description: DEFAULT_DESC, social: DEFAULT_SOCIAL_DESC, noindex: false };
-  if (pathname === '/create' || pathname.startsWith('/create/')) {
-    const d = 'Create a personalized digital wish in under two minutes and share it with someone special.';
-    return { title: titleize('Create a Wish'), description: d, social: d, noindex: false };
-  }
-  if (pathname.startsWith('/wish/')) return { title: titleize('A special wish for you'), description: DEFAULT_DESC, social: DEFAULT_SOCIAL_DESC, noindex: true };
-  if (pathname.startsWith('/reply/')) return { title: titleize('A reply to your wish'), description: DEFAULT_DESC, social: DEFAULT_SOCIAL_DESC, noindex: true };
-  if (pathname === '/admin' || pathname.startsWith('/admin/')) return { title: titleize('Admin'), description: DEFAULT_DESC, social: DEFAULT_SOCIAL_DESC, noindex: true };
-
-  const infoKey = pathname.slice(1);
-  if (PAGES[infoKey]) {
-    const [title, text] = PAGES[infoKey];
-    return { title: titleize(title), description: text, social: text, noindex: false };
-  }
-
-  const seoPage = SEO_PAGES.find((p) => `/${p.slug}` === pathname);
-  if (seoPage) {
-    const d = `${seoPage.intro.slice(0, 140)}…`;
-    return { title: titleize(seoPage.h1), description: d, social: d, noindex: false };
-  }
-
-  return { title: titleize('Not found'), description: DEFAULT_DESC, social: DEFAULT_SOCIAL_DESC, noindex: true };
-}
-
-function applySeo(html, seo, url) {
-  const robots = seo.noindex ? 'noindex,nofollow' : 'index,follow,max-image-preview:large';
-  const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-  return html
-    .replace(/<title>.*?<\/title>/s, `<title>${esc(seo.title)}</title>`)
-    .replace(/<meta name="description" content=".*?">/s, `<meta name="description" content="${esc(seo.description)}">`)
-    .replace(/<meta name="robots" content=".*?">/s, `<meta name="robots" content="${robots}">`)
-    .replace(/<link rel="canonical" href=".*?">/s, `<link rel="canonical" href="${esc(url)}">`)
-    .replace(/<meta property="og:url" content=".*?">/s, `<meta property="og:url" content="${esc(url)}">`)
-    .replace(/<meta property="og:title" content=".*?">/s, `<meta property="og:title" content="${esc(seo.title)}">`)
-    .replace(/<meta property="og:description" content=".*?">/s, `<meta property="og:description" content="${esc(seo.social)}">`)
-    .replace(/<meta name="twitter:title" content=".*?">/s, `<meta name="twitter:title" content="${esc(seo.title)}">`)
-    .replace(/<meta name="twitter:description" content=".*?">/s, `<meta name="twitter:description" content="${esc(seo.social)}">`);
-  // og:image/twitter:image/twitter:card and the AdSense script and JSON-LD are untouched —
-  // they're sitewide-static in index.html and this never removes or duplicates them.
+async function prerendered(origin, pathname) {
+  try {
+    const res = await fetch(new URL(`/_pre${pathname === '/' ? '/index' : pathname}.html`, origin));
+    const body = await res.text();
+    return looksPrerendered(res, body) ? body : null;
+  } catch { return null; }
 }
 
 export default async function middleware(request) {
   const url = new URL(request.url);
-  // Canonicalize trailing slashes here, not in vercel.json: this middleware runs before Vercel's
-  // "redirects" config and returns a terminal response for every matched path, so a redirect rule
-  // in vercel.json would never actually be reached. "/" itself is never affected. The query string
-  // is preserved; the redirect target then goes through the exact same seoFor()/applySeo() below on
-  // the follow-up request, so a private path like /wish/:id/ still ends up noindex,nofollow once
-  // redirected to its canonical /wish/:id form -- this only removes the trailing slash, nothing else.
   if (url.pathname.length > 1 && url.pathname.endsWith('/')) {
     return Response.redirect(new URL(url.pathname.slice(0, -1) + url.search, url.origin), 308);
   }
-  const origin = await fetch(new URL('/index.html', url.origin));
-  if (!origin.ok) return origin; // fall back to whatever the platform would otherwise serve
-  const html = applySeo(await origin.text(), seoFor(url.pathname), `${SITE}${url.pathname}`);
-  return new Response(html, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' } });
+  const seo = seoForPath(url.pathname);
+
+  let html = seo.prerendered ? await prerendered(url.origin, url.pathname) : null;
+  if (!html) {
+    const shell = await fetch(new URL('/index.html', url.origin));
+    if (!shell.ok) return shell; // fall back to whatever the platform would otherwise serve
+    html = await shell.text();
+  }
+  const canonical = `${SITE_URL}${seo.canonicalPath ?? url.pathname}`;
+  const ogType = seo.meta && ARTICLE_GROUPS.has(seo.meta.group) ? 'article' : undefined;
+  return new Response(applySeo(html, seo, canonical, { ogType }), {
+    status: seo.status, // 404 for unknown paths (the SPA shell still renders its friendly not-found page)
+    headers: { 'content-type': 'text/html; charset=utf-8' },
+  });
 }

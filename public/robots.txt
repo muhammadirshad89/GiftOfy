@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
 Disallow: /admin
+
+# Wish and reply pages are private (noindex via meta tag + they are not linked anywhere). They are intentionally
+# crawlable so search engines can read the noindex directive; do not Disallow them here.
+
 Sitemap: https://giftofy.vercel.app/sitemap.xml

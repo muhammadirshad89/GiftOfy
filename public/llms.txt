@@ -1,0 +1,21 @@
+# GiftOfy
+
+> GiftOfy is a free website for creating and sharing personalized digital wishes. A sender chooses an occasion and design, writes a message (up to 500 characters) and shares a link; the recipient taps to reveal the wish and can send a private reply. No account is needed by either side. GiftOfy does not sell gifts, process payments, schedule messages or support photo uploads.
+
+Operated by an independent individual (see About). English-language site.
+
+## Product
+- [How GiftOfy works](https://giftofy.vercel.app/how-it-works): the create, share, reveal and reply flow, with current limits
+- [FAQ](https://giftofy.vercel.app/faq): pricing, accounts, privacy, replies, removing a wish
+- [Create a wish](https://giftofy.vercel.app/create)
+
+## About and policies
+- [About GiftOfy](https://giftofy.vercel.app/about)
+- [Editorial standards](https://giftofy.vercel.app/editorial-policy)
+- [Privacy Policy](https://giftofy.vercel.app/privacy)
+- [Terms of Use](https://giftofy.vercel.app/terms)
+- [Contact](https://giftofy.vercel.app/contact)
+
+## Content
+- [Wishes and messages by occasion and recipient](https://giftofy.vercel.app/wishes)
+- [Guides on writing and sending digital greetings](https://giftofy.vercel.app/guides)

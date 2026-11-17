@@ -22,8 +22,10 @@ export default function Header() {
         <nav id="nav" className={open ? 'open' : ''} aria-label="Main">
           <Link to="/">Home</Link>
           <Link to="/create">Create a Wish</Link>
-          <Link to="/#occasions">Occasions</Link>
-          <Link to="/#how">How It Works</Link>
+          <Link to="/wishes">Wishes &amp; Messages</Link>
+          <Link to="/guides">Guides</Link>
+          <Link to="/how-it-works">How It Works</Link>
+          <Link to="/about">About</Link>
           <Button to="/create" className="mcta">Create Your Wish ❤️</Button>
         </nav>
         <Button to="/create" size="sm" className="hcta">Create Your Wish ❤️</Button>

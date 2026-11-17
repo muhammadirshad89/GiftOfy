@@ -4,7 +4,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import middleware from './middleware.js';
+import middleware, { config } from './middleware.js';
 
 const TEMPLATE = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf8');
 
@@ -118,5 +118,64 @@ describe('P1: new-year-wishes and graduation-wishes — server-delivered SEO', (
       expect(res.status, slug).toBe(308);
       expect(res.headers.get('location'), slug).toBe(`https://giftofy.vercel.app/${slug}`);
     }
+  });
+});
+
+describe('middleware: status codes, matcher and pre-rendered pages', () => {
+  const matches = (p) => new RegExp(`^/${config.matcher.slice(2, -1)}$`).test(p);
+  const pre = (body = '<div id="root" data-prerendered="1"><h1>Pre</h1></div>') => body;
+
+  it('unknown URLs return a real HTTP 404 (not a soft 404) and stay noindex', async () => {
+    const res = await middleware(new Request('https://giftofy.vercel.app/definitely-not-a-page'));
+    expect(res.status).toBe(404);
+    expect(robots(await res.text())).toBe('noindex,nofollow');
+  });
+  it('real pages, wish, reply, admin and create/:occasion return 200', async () => {
+    for (const p of ['/', '/birthday-wishes', '/guides/how-to-write-a-heartfelt-message', '/wish/Abc12345', '/reply/tok', '/admin', '/create/eid']) {
+      expect((await middleware(new Request(`https://giftofy.vercel.app${p}`))).status, p).toBe(200);
+    }
+  });
+  it('/create/:occasion canonicalizes to /create', async () => {
+    expect(canonical(await run('/create/birthday'))).toBe('https://giftofy.vercel.app/create');
+  });
+  it('the matcher leaves static files alone (Search Console file, ads.txt, robots, sitemap, llms.txt, service-worker stubs, assets, /_pre)', () => {
+    for (const p of ['/google0da64d656286dcbb.html', '/ads.txt', '/robots.txt', '/sitemap.xml', '/llms.txt', '/sw.js', '/sww.js', '/favicon.svg', '/og-default.png', '/logo-512.png', '/assets/index-abc.js', '/_pre/birthday-wishes.html', '/index.html']) {
+      expect(matches(p), p).toBe(false);
+    }
+  });
+  it('the matcher still covers every page, dynamic route and unknown path', () => {
+    for (const p of ['/', '/birthday-wishes', '/guides/how-to-share-a-digital-greeting', '/wish/Abc12345', '/reply/tok', '/admin', '/admin/login', '/create/eid', '/nope']) expect(matches(p), p).toBe(true);
+  });
+  it('serves the pre-rendered body for public pages and applies the route SEO to it', async () => {
+    globalThis.fetch = vi.fn(async (u) => (String(u).includes('/_pre/birthday-wishes.html')
+      ? new Response(TEMPLATE.replace('<div id="root"></div>', pre()), { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' } })
+      : new Response(TEMPLATE)));
+    const html = await run('/birthday-wishes');
+    expect(html).toContain('<h1>Pre</h1>');
+    expect(title(html)).toBe('Birthday Wishes &amp; Messages for Any Age · GiftOfy');
+    expect(canonical(html)).toBe('https://giftofy.vercel.app/birthday-wishes');
+    expect(html).toContain('<meta property="og:type" content="article">');
+    expect(globalThis.fetch.mock.calls.map((c) => String(c[0]))).toContain('https://giftofy.vercel.app/_pre/birthday-wishes.html');
+  });
+  it('the homepage uses /_pre/index.html', async () => {
+    globalThis.fetch = vi.fn(async (u) => new Response(TEMPLATE.replace('<div id="root"></div>', pre()), { status: 200, headers: { 'content-type': 'text/html' } }));
+    await run('/');
+    expect(String(globalThis.fetch.mock.calls[0][0])).toBe('https://giftofy.vercel.app/_pre/index.html');
+  });
+  it('falls back to the plain SPA shell when the pre-rendered file is missing, so a build problem cannot take a page down', async () => {
+    // Vercel would answer a missing /_pre file with the SPA shell (200, no data-prerendered marker).
+    const html = await run('/eid-wishes');
+    expect(html).toContain('<div id="root"></div>');
+    expect(title(html)).toContain('Eid Mubarak');
+    expect(robots(html)).toBe('index,follow,max-image-preview:large');
+  });
+  it('falls back safely if fetching the pre-rendered file throws', async () => {
+    let n = 0;
+    globalThis.fetch = vi.fn(async () => { if (n++ === 0) throw new Error('boom'); return new Response(TEMPLATE); });
+    expect(title(await run('/faq'))).toContain('FAQ');
+  });
+  it('never touches wish/reply/admin pages with pre-rendered content', async () => {
+    await run('/wish/Abc12345');
+    expect(globalThis.fetch.mock.calls.map((c) => String(c[0])).some((u) => u.includes('/_pre/'))).toBe(false);
   });
 });
