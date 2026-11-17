@@ -40,9 +40,9 @@ describe('GiftOfy', () => {
   });
   it('info pages, footer credit and brand spelling', async () => {
     at('/privacy');
-    expect(await screen.findByRole('heading', { name: 'Privacy' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Privacy Policy' })).toBeTruthy();
     expect(screen.getByRole('link', { name: /\+923218100537/ }).href).toBe('https://wa.me/923218100537');
-    expect(document.body.textContent).toContain('Designed & Developed by Syyed Muhamamd Irshad');
+    expect(document.body.textContent).toContain('Designed & Developed by Syyed Muhummad Irshad');
     expect(document.body.textContent).not.toMatch(/Giftofy|Digital Wishes/);
   });
   it('mobile menu toggles', async () => {

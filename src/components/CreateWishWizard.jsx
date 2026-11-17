@@ -17,8 +17,9 @@ const pick = (t) => ({ tpl: t.id, tone: STYLE_TONE[t.style] || 'simple' });
 const BLANK = { step: 0, occ: 'birthday', ...pick(TEMPLATE_MAP.aurora), custom: false, edited: false, msg: '', name: '', rel: '', sender: '', hide: false, vi: 0 };
 
 /** Steps: 0 Occasion, 1 Template (or own message), 2 Personalize, 3 Preview, then Share. */
-export default function CreateWishWizard({ initialOcc, initialTpl }) {
-  const [s, setS] = useState(() => ({ ...BLANK, ...(initialOcc ? { occ: initialOcc, ...pick(TEMPLATE_MAP[initialTpl] || firstFor(initialOcc)), step: 1 } : {}) }));
+export default function CreateWishWizard({ initialOcc, initialTpl, initialMsg }) {
+  // initialMsg: a sample message chosen on a content page ("Use in a wish"); the sender can still edit or replace it.
+  const [s, setS] = useState(() => ({ ...BLANK, ...(initialOcc ? { occ: initialOcc, ...pick(TEMPLATE_MAP[initialTpl] || firstFor(initialOcc)), step: 1 } : {}), ...(initialMsg ? { custom: true, edited: true, msg: initialMsg } : {}) }));
   const [err, setErr] = useState('');
   const [pubId, setPubId] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -47,7 +48,7 @@ export default function CreateWishWizard({ initialOcc, initialTpl }) {
         <ProgressBar current={4} />
         <div className="wcard">
           <div className="big" aria-hidden="true">🎉</div>
-          <h2>Your wish is ready</h2>
+          <h1 className="h2">Your wish is ready</h1>
           <p className="lead">Share this link. The recipient doesn’t need an account.</p>
           <input readOnly aria-label="Wish link" value={url} onFocus={(e) => e.target.select()} />
           <div style={{ marginTop: 16 }}><ShareButtons id={pubId} url={url} /></div>
@@ -59,11 +60,11 @@ export default function CreateWishWizard({ initialOcc, initialTpl }) {
 
   const body = [
     <>
-      <h2>What are we celebrating?</h2>
+      <h1 className="h2">What are we celebrating?</h1>
       <OccasionGrid selected={s.occ} onPick={(id) => set({ occ: id, ...pick(firstFor(id)), step: 1 })} />
     </>,
     <>
-      <h2>Choose a design</h2>
+      <h1 className="h2">Choose a design</h1>
       <div className="chips" role="group" aria-label="Message type">
         <button className={`chip${!s.custom ? ' sel' : ''}`} aria-pressed={!s.custom} onClick={() => set({ custom: false, edited: false, msg: '' })}>Use a template message</button>
         <button className={`chip${s.custom ? ' sel' : ''}`} aria-pressed={s.custom} onClick={() => set({ custom: true, edited: true, msg: '' })}>✍️ Write your own message</button>
@@ -71,7 +72,7 @@ export default function CreateWishWizard({ initialOcc, initialTpl }) {
       <TemplatePicker key={s.occ} occ={s.occ} value={s.tpl} name={name} onSelect={(t) => set(pick(t))} />
     </>,
     <>
-      <h2>{o.icon} Personalize</h2>
+      <h1 className="h2">{o.icon} Personalize</h1>
       <label>Recipient name<input value={s.name} maxLength={40} placeholder="e.g. Ayesha" autoComplete="off" onChange={(e) => set({ name: e.target.value })} /></label>
       <label>Relationship <small>(optional)</small>
         <select value={s.rel} onChange={(e) => set({ rel: e.target.value })}><option value="">Skip</option>{REL.map((r) => <option key={r}>{r}</option>)}</select>
@@ -91,12 +92,12 @@ export default function CreateWishWizard({ initialOcc, initialTpl }) {
       </label>
     </>,
     <>
-      <h2>Preview</h2>
+      <h1 className="h2">Preview</h1>
       <p className="mut">This is exactly what {name} will see.</p>
       <WishCard className="pv" floaties tpl={s.tpl} occ={s.occ} name={name} sender={s.sender.trim()} msg={text} />
       <div className="magicnote">
         <b>✨ Your Wish’s Magic</b>
-        <p className="mut">{o.title} wishes open with a <b>{{balloon:'balloon',envelope:'envelope',ring:'ring',heart:'heart',gift:'gift box',moon:'moon',bouquet:'bouquet'}[magicFor(s.occ).shape]}</b> the recipient taps to reveal, with {magicFor(s.occ).particles.join(', ')} floating behind it. This is matched to the occasion automatically.</p>
+        <p className="mut">{o.title} wishes open with a <b>{{balloon:'balloon',hearts:'pair of hearts',envelope:'envelope',ring:'ring',heart:'heart',gift:'gift box',moon:'moon',bouquet:'bouquet'}[magicFor(s.occ).shape] || 'surprise'}</b> the recipient taps to reveal, with {magicFor(s.occ).particles.join(', ')} floating behind it. This is matched to the occasion automatically.</p>
       </div>
     </>,
   ][s.step];

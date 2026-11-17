@@ -1,7 +1,54 @@
-# GiftOfy v1.9.0 — Private Reply Links
+# GiftOfy v2.0.0 — International SEO, content and AdSense-readiness release
 Create a Wish. Share the Moment. Send a Gift. ❤️
 
 React + Vite + React Router, with Supabase (Postgres, Auth, Row Level Security) as the backend.
+
+> v2.0.0 adds a content system, pre-rendering and a technical-SEO layer on top of the unchanged v1.9.0 product
+> (wizard, Magic Wish reveal, reactions, private replies, admin, Supabase schema). Older version notes are kept below.
+> A full write-up of this release is in `docs/IMPLEMENTATION-REPORT.md`.
+
+## v2.0.0: how the SEO / content system works
+
+**One registry drives everything.** `src/data/pageMeta.js` lists every public page once (path, H1, title, description,
+group, dates). The routes in `src/App.jsx`, the sitemap, the footer/hub navigation, the edge middleware and the
+pre-renderer all read it, so a page cannot be routable but un-sitemapped (or the reverse). Tests enforce this.
+
+| What | Where |
+|---|---|
+| Page registry (titles, descriptions, URLs) | `src/data/pageMeta.js` |
+| Occasion pages (18) | `src/data/content/occasionsA/B/C.js` |
+| Recipient pages (9) | `src/data/content/recipients.js` |
+| Guides (8) | `src/data/content/guides.js` |
+| About, FAQ, How it works, Contact, Editorial, Privacy, Terms | `src/data/corePages.js` |
+| Operator name, contact, AdSense id, dates | `src/data/siteConfig.js` |
+| Page template (breadcrumbs, TOC, FAQ, JSON-LD, related links) | `src/pages/ContentPage.jsx` |
+| Server-side SEO resolution (middleware + build + tests) | `src/seo/routes.js`, `src/seo/applySeo.js` |
+| Build-time pre-rendering | `scripts/prerender.mjs` (runs after `vite build`) |
+| Ad-ready, **disabled-by-default** AdSense slot | `src/components/AdSlot.jsx` |
+
+**Pre-rendering.** `npm run build` = `vite build` then `scripts/prerender.mjs`, which renders the real `<App />` for every
+registry URL into `dist/_pre/<path>.html`. `middleware.js` serves that HTML (with the right head tags) and
+`src/main.jsx` hydrates it. If a pre-rendered file is ever missing, middleware falls back to the normal SPA shell.
+
+**Adding a page.** (1) add a row to `src/data/pageMeta.js`; (2) add its body to the matching content file using the same
+block syntax (see the header of `src/components/Prose.jsx`); (3) run `npm run seo:sitemap`; (4) run `npm test`.
+The integrity tests fail if a body is missing, a related link is broken, a title/description/message is duplicated, or a
+page is too thin.
+
+**Content rules** (see also `/editorial-policy`): write only what GiftOfy really does; never invent testimonials, numbers
+or features. Counts such as "50 free designs" come from `src/data/stats.js`, not from typed text.
+
+**Environment variables** (`.env.example`): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SITE_URL`, and the optional
+`VITE_ADSENSE_ENABLED` / `VITE_ADSENSE_SLOT_CONTENT`. `.env` itself is never part of the repository or the release ZIP.
+
+## Run, test, build
+
+```bash
+npm ci            # install from package-lock.json
+npm test          # 143 tests (vitest); includes pre-render, hydration, SEO and middleware tests
+npm run build     # vite build + pre-render of 46 pages + dist/sitemap.xml
+npm run preview   # serves dist (note: preview does not run middleware.js; Vercel does)
+```
 
 ## Run locally
 ```bash

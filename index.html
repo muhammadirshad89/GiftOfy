@@ -6,12 +6,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#6c3bff">
 
-<!-- Default/homepage SEO. src/utils/useSeo.js overrides these per route on client-side navigation;
-     middleware.js overrides them in the server-delivered HTML for the initial request to every
-     other route, so crawlers and link-preview bots that don't run JavaScript still see correct,
-     route-specific values. These tags are the values for "/" itself and the final fallback. -->
+<!-- Default/homepage SEO. For every public page the HTML actually served is the pre-rendered copy written by
+     scripts/prerender.mjs (full body + route-specific tags); for private and unknown routes middleware.js rewrites
+     these tags. src/utils/useSeo.js keeps them in sync on client-side navigation. All three read the same registry
+     (src/data/pageMeta.js + src/seo/routes.js). These tags are the values for "/" itself and the final fallback. -->
 <title>GiftOfy – Create Digital Wishes &amp; Share Special Moments</title>
-<meta name="description" content="Create beautiful personalized digital wishes for birthdays, anniversaries, weddings, Eid, Valentine’s Day and more. Choose a design, personalize your message and share your wish with anyone.">
+<meta name="description" content="Create personalized digital wishes for birthdays, weddings, Eid and more. Choose a design, add your message and share it with a link. Free, with no account needed.">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="https://giftofy.vercel.app/">
 
@@ -23,11 +23,14 @@
 <meta property="og:image" content="https://giftofy.vercel.app/og-default.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="GiftOfy: personalized digital wishes you can share with a link">
+<meta property="og:locale" content="en_US">
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="GiftOfy – Create Digital Wishes &amp; Share Special Moments">
 <meta name="twitter:description" content="Create beautiful personalized digital wishes and share special moments.">
 <meta name="twitter:image" content="https://giftofy.vercel.app/og-default.png">
+<meta name="twitter:image:alt" content="GiftOfy: personalized digital wishes you can share with a link">
 
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,16 +39,20 @@
 <!-- Sitewide structured data: identical on every page, so it lives here once rather than being
      generated per route. Only confirmed, accurate facts -- no ratings/reviews/offers/SearchAction. -->
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Organization","name":"GiftOfy","url":"https://giftofy.vercel.app/","logo":"https://giftofy.vercel.app/og-default.png"}
+{"@context":"https://schema.org","@type":"Organization","name":"GiftOfy","url":"https://giftofy.vercel.app/","logo":"https://giftofy.vercel.app/logo-512.png","description":"GiftOfy is a free service for creating and sharing personalized digital wishes.","contactPoint":{"@type":"ContactPoint","contactType":"customer support","email":"career@giftofy.vercel.app","url":"https://giftofy.vercel.app/contact","availableLanguage":"English"}}
 </script>
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebSite","name":"GiftOfy","url":"https://giftofy.vercel.app/"}
+{"@context":"https://schema.org","@type":"WebSite","name":"GiftOfy","url":"https://giftofy.vercel.app/","inLanguage":"en"}
 </script>
 
 <!-- Google AdSense. Live publisher id -- do not duplicate, do not change, do not remove. -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6145547842489065" crossorigin="anonymous"></script>
 
+<!-- Chatzy AI chat widget (stylesheet + script). The script line was accidentally deleted together with the
+     ad-network scripts in commit abf6da4 ("Remove intrusive advertising scripts") and is restored here exactly as it
+     was in commit f4911b6. It is a chat widget, not an advertising script. -->
 <link rel="stylesheet" href="https://chatzy-kb-store.s3.amazonaws.com/icons/5ab07987-b5db-477c-82ff-1287e0883acb"/>
+<script src="https://chatzy-kb-store.s3.amazonaws.com/icons/56706cc4-b3ba-4eba-9610-f2fb07008a5c" id="799ad3fb-adac-4333-8225-958d20808016" class="chatzy_widget_script" defer></script>
 </head>
 <body>
 <div id="root"></div><script type="module" src="/src/main.jsx"></script></body>
